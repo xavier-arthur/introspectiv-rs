@@ -44,11 +44,18 @@ impl Route {
                 </Layout>
             },
 
-            Route::Gol => html! {
-                <Layout>
-                    <Gol color={Option::<String>::None} />
-                </Layout>
-            },
+            Route::Gol => {
+                html! {
+                    <Layout>
+                        <Gol
+                            autoplay_interval={0}
+                            reset_trigger={0}
+                            color={Option::<String>::None}
+                        />
+                    </Layout>
+                },
+            }
+
 
             Route::NotFound => html! {
                 { "404, not found" }

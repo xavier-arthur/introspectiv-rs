@@ -1,121 +1,153 @@
-/* game of life  */
-
-use lucide_yew::Mouse;
 use yew::prelude::*;
-use wasm_bindgen::{JsCast, JsValue};
+use wasm_bindgen::JsCast;
 use web_sys::{HtmlCanvasElement, CanvasRenderingContext2d, HtmlElement};
+
+pub struct Gol {
+    canvas_ref: NodeRef,
+    grid: Vec<bool>,
+    cols: i32,
+}
 
 #[derive(Properties, PartialEq)]
 pub struct GolProps {
-    pub color: Option<String>
+    pub color: Option<String>,
+    pub reset_trigger: u32,
+    pub autoplay_interval: u32
 }
 
-#[component(Gol)]
-pub fn gol(props: &GolProps) -> Html {
-    let canvas_ref = use_node_ref();
+pub enum Msg {
+    CellClicked(MouseEvent),
+    Reset,
+}
 
-    let color = props.color
-        .as_ref()
-        .map(|c| c.clone())
-        .unwrap_or_else(|| String::from("#5e5848"));
+impl Gol {
+    fn color(ctx: &Context<Self>) -> String {
+        ctx.props().color
+            .clone()
+            .unwrap_or_else(|| String::from("#5e5848"))
+    }
 
-    let cell_size = 24.0;
+    fn draw(&self, ctx: &Context<Self>) {
+        let canvas = self.canvas_ref.cast::<HtmlCanvasElement>().unwrap();
+        let cell_size = 24.0;
 
-    let grid_state = use_state(|| Vec::new());
-    let col_state = use_state(|| 0);
+        let rows = (canvas.height() as f64 / cell_size).floor() as i32;
+        let render_ctx: CanvasRenderingContext2d = canvas
+            .get_context("2d").unwrap().unwrap()
+            .dyn_into().unwrap();
 
-    let draw_canvas = {
-        let canvas_ref = canvas_ref.clone();
-        let color = color.clone();
+        render_ctx.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
+        render_ctx.set_stroke_style_str(&Self::color(ctx));
+        render_ctx.set_line_width(0.5);
+        render_ctx.set_fill_style_str(&Self::color(ctx));
 
-        move |cols: i32, grid: &Vec<bool>| {
-            let canvas = canvas_ref.cast::<HtmlCanvasElement>().unwrap();
-            let rows = (canvas.height() as f64 / cell_size).floor() as i32;
-            let ctx: CanvasRenderingContext2d =
-                canvas.get_context("2d").unwrap().unwrap()
-                .dyn_into().unwrap();
-            ctx.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
-            ctx.set_stroke_style_str(&color);
-            ctx.set_line_width(0.5);
-            ctx.set_fill_style_str(&color);
-            for x in 0..cols {
-                for y in 0..rows {
-                    let index = (y * cols + x) as usize;
-                    ctx.stroke_rect(
+        for x in 0..self.cols {
+            for y in 0..rows {
+                let index = (y * self.cols + x) as usize;
+
+                render_ctx.stroke_rect(
+                    x as f64 * cell_size,
+                    y as f64 * cell_size,
+                    cell_size,
+                    cell_size,
+                );
+
+                if self.grid.get(index).copied().unwrap_or(false) {
+                    render_ctx.fill_rect(
                         x as f64 * cell_size,
                         y as f64 * cell_size,
                         cell_size,
                         cell_size,
                     );
-                    if grid.get(index).copied().unwrap_or(false) {
-                        ctx.fill_rect(
-                            x as f64 * cell_size,
-                            y as f64 * cell_size,
-                            cell_size,
-                            cell_size,
-                        );
-                    }
                 }
             }
         }
-    };
-
-    {
-        let canvas_ref = canvas_ref.clone();
-        let draw_canvas = draw_canvas.clone();
-        let grid_state = grid_state.clone();
-        let col_state = col_state.clone();
-
-        use_effect_with(
-            (),
-            move |_| {
-                let canvas = canvas_ref.cast::<HtmlCanvasElement>().unwrap();
-                let elem: &HtmlElement = canvas.as_ref();
-                let rect = elem.get_bounding_client_rect();
-
-                canvas.set_width(rect.width() as u32);
-                canvas.set_height(rect.height() as u32);
-
-                let cols = (rect.width() / cell_size).floor() as i32;
-                let rows = (rect.height() / cell_size).floor() as i32;
-                let initial_grid = vec![false; (cols * rows) as usize];
-
-                col_state.set(cols);
-                grid_state.set(initial_grid.clone());
-
-                draw_canvas(cols, &initial_grid);
-            }
-        );
     }
 
-    let onclick = {
-        let canvas_ref = canvas_ref.clone();
-        let col_state = col_state.clone();
-        let grid_state = grid_state.clone();
-        let draw_canvas = draw_canvas.clone();
+    fn advance_game_state(&self, ctx: &Context<Self>) {
+        todo!()
+    }
+}
 
-        crate::log!("ayo");
+impl Component for Gol {
+    type Message = Msg;
+    type Properties = GolProps;
 
-        Callback::from(move |e: MouseEvent| {
-            let canvas = canvas_ref.cast::<HtmlCanvasElement>().unwrap();
-            let rect = canvas.get_bounding_client_rect();
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {
+            canvas_ref: NodeRef::default(),
+            grid: Vec::new(),
+            cols: 0,
+        }
+    }
 
-            let x = e.client_x() as f64 - rect.left();
-            let y = e.client_y() as f64 - rect.top();
+    fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {
+        if !first_render {
+            return;
+        }
 
-            let cols = *col_state as usize;
-            let index = (y / cell_size).floor() as usize * cols + (x / cell_size).floor() as usize;
+        let canvas = self.canvas_ref.cast::<HtmlCanvasElement>().unwrap();
+        let elem: &HtmlElement = canvas.as_ref();
+        let rect = elem.get_bounding_client_rect();
 
-            let mut new_grid = (*grid_state).clone();
+        canvas.set_width(rect.width() as u32);
+        canvas.set_height(rect.height() as u32);
 
-            new_grid[index] = !new_grid[index];
-            grid_state.set(new_grid.clone());
+        self.cols = (rect.width() / 24.0).floor() as i32;
+        let rows = (rect.height() / 24.0).floor() as i32;
 
-            draw_canvas(cols as i32, &new_grid);
-        })
-    };
+        self.grid = vec![false; (self.cols * rows) as usize];
 
-    html! {
-        <canvas onclick={onclick} ref={canvas_ref} class="size-full"></canvas>
+        self.draw(ctx);
+    }
+
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+        match msg {
+            Msg::CellClicked(e) => {
+                let cell_size = 24.0;
+
+                let canvas = self.canvas_ref.cast::<HtmlCanvasElement>().unwrap();
+
+                let rect = canvas.get_bounding_client_rect();
+
+                let x = e.client_x() as f64 - rect.left();
+                let y = e.client_y() as f64 - rect.top();
+
+                let cell_x = (x / cell_size).floor() as i32;
+                let cell_y = (y / cell_size).floor() as i32;
+                let index = (cell_y * self.cols + cell_x) as usize;
+
+                if let Some(cell) = self.grid.get_mut(index) {
+                    *cell = !*cell;
+                }
+
+                self.draw(ctx);
+
+                false
+            }
+
+            Msg::Reset => {
+                self.grid.fill(false);
+                self.draw(ctx);
+
+                false
+            }
+        }
+    }
+
+    fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
+        if ctx.props().reset_trigger != old_props.reset_trigger {
+            ctx.link().send_message(Msg::Reset);
+        }
+
+        false
+    }
+
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let onclick = ctx.link().callback(Msg::CellClicked);
+
+        html! {
+            <canvas ref={self.canvas_ref.clone()} {onclick} class="size-full" />
+        }
     }
 }
