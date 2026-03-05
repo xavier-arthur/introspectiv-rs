@@ -40,14 +40,16 @@ impl Component for Gol {
                         <input placeholder="Autoplay (ms)" type="text" class="px-2 rounded-l-lg border h-[calc(100%-1rem)]" />
                         <button onclick={reset} class="rounded-r-lg p-2 bg-dark-1 h-fit text-xs">{ "Clear" }</button>
                     </div>
-                    <button class="rounded-xl p-2 bg-dark-1 h-fit">{ "Iterate" }</button>
+                    <button class="rounded-lg p-2 bg-dark-1 h-fit text-xs self-center mr-2">{ "Iterate" }</button>
                 </div>
 
-                <Grid
-                    color={Option::<String>::None}
-                    reset_trigger={self.reset_trigger}
-                    autoplay_interval={0}
-                />
+                <div class="h-[calc(100%-3rem)]">
+                    <Grid
+                        color={Option::<String>::None}
+                        reset_trigger={self.reset_trigger}
+                        autoplay_interval={0}
+                    />
+                </div>
             </>
         }
     }
