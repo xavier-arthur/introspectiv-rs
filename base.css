@@ -38,6 +38,8 @@
     --border: var(--color-dark-1);
 }
 
+a:hover { @apply underline }
+
 html {
     @apply h-full
 }

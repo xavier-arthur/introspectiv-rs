@@ -390,6 +390,7 @@ dependencies = [
 name = "intr"
 version = "0.1.0"
 dependencies = [
+ "lucide-yew",
  "yew",
  "yew-router",
 ]
@@ -415,6 +416,15 @@ name = "libc"
 version = "0.2.182"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6800badb6cb2082ffd7b6a67e6125bb39f18782f793520caee8cb8846be06112"
+
+[[package]]
+name = "lucide-yew"
+version = "2.577.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a149082dd5387487284e413563c624c982202edc700ea4483d9385b3afb18f9"
+dependencies = [
+ "yew",
+]
 
 [[package]]
 name = "memchr"
