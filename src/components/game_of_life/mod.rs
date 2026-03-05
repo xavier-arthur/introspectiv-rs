@@ -1,3 +1,3 @@
-mod cell;
+mod grid;
 
-pub use cell::GolCell as Cell;
+pub use grid::Grid;
