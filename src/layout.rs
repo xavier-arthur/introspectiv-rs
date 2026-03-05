@@ -12,7 +12,7 @@ fn topbar() -> Html {
     use crate::routes::Route;
 
     html! {
-        <nav class="block w-full bg-dark border-b">
+        <nav class="block w-full bg-dark border-b h-5">
             <ul class="flex items-center gap-x-2 [&>li]:text-xs">
                 <li class="">
                     <Link<Route> to={Route::Index}>
@@ -49,7 +49,7 @@ pub fn layout(props: &LayoutProps) -> Html {
         <>
             <TopBar />
 
-            <main class="container mx-auto p-8">
+            <main class="container mx-auto p-8 h-[calc(100%-1.250rem)]">
                 { props.children.clone() }
             </main>
         </>

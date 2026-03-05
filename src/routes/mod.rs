@@ -46,7 +46,7 @@ impl Route {
 
             Route::Gol => html! {
                 <Layout>
-                    <Gol />
+                    <Gol color={Option::<String>::None} />
                 </Layout>
             },
 
