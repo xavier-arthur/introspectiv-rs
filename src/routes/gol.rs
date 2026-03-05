@@ -23,14 +23,21 @@ pub fn gol(props: &GolProps) -> Html {
 
     let grid_state = use_state(|| Vec::new());
     let col_state = use_state(|| 0);
+    let mounted = use_state(|| false);
 
     {
         let canvas_ref = canvas_ref.clone();
-
         let grid_state_clone_effect = grid_state.clone();
         let col_state_clone_effect = col_state.clone();
+        let mounted = mounted.clone();
 
         use_effect(move || {
+            if *mounted {
+                return;
+            }
+
+            crate::log!("running");
+
             let canvas = canvas_ref.cast::<HtmlCanvasElement>().unwrap();
 
             let elem: &HtmlElement = canvas.as_ref();
@@ -79,7 +86,9 @@ pub fn gol(props: &GolProps) -> Html {
                         );
                     }
                 }
-            }
+            };
+
+            mounted.set(true);
         });
     }
 
