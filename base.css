@@ -7,6 +7,11 @@
     *, ::before, ::after {
         border-color: var(--border);
     }
+
+    input::placeholder {
+        @apply text-light;
+        @apply opacity-45;
+    }
 }
 
 @theme {
