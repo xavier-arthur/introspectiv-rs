@@ -1,11 +1,4 @@
-use yew::prelude::*;
-
-#[component]
-fn App() -> Html {
-    html! {
-        <p>{ "It works"}</p>
-    }
-}
+use intr::app::App;
 
 fn main() {
     yew::Renderer::<App>::new().render();
