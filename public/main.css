@@ -1,5 +1,5 @@
 :root {
-  --font: 'IBM Plex Sans'
+  --font: 'IBM Plex Sans';
   --dark   : #282828;
   --red    : #fb4943;
   --green  : #b8bb26;
@@ -10,6 +10,8 @@
   --dark-1 : #3c3836;
   --light  : #ebdbb2;
 }
+
+html { height: 100%; }
 
 body {
   height: 100%;
