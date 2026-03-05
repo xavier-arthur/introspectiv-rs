@@ -11,17 +11,23 @@ fn topbar() -> Html {
     use crate::routes::Route;
 
     html! {
-        <nav class="w-full bg-dark block">
-            <ul style="list-style: none; display: flex">
-                <li>
+        <nav class="block w-full bg-dark border-b">
+            <ul class="flex gap-x-2 [&>li]:text-xs">
+                <li class="">
                     <Link<Route> to={Route::Index}>
-                        {"Index"}
+                        {"Home"}
                     </Link<Route>>
                 </li>
 
                 <li>
                     <Link<Route> to={Route::About}>
                         {"About"}
+                    </Link<Route>>
+                </li>
+
+                <li>
+                    <Link<Route> to={Route::About}>
+                        { "Projects" }
                     </Link<Route>>
                 </li>
             </ul>
