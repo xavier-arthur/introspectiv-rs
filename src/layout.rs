@@ -26,11 +26,17 @@ fn topbar() -> Html {
                     </Link<Route>>
                 </li>
 
-                <li>
+                <li class="relative group">
                     <Link<Route> to={Route::About} classes={"block space-x-0.5"}>
                         { "Projects" }
                         <ChevronDown class="inline size-4" />
                     </Link<Route>>
+
+                    <div class="hidden group-hover:block absolute top-4 bg-dark-1 w-full">
+                        <Link<Route> to={Route::Gol}>
+                            { "GOL" }
+                        </Link<Route>>
+                    </div>
                 </li>
             </ul>
         </nav>

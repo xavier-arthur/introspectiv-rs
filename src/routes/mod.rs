@@ -1,12 +1,17 @@
 use yew_router::prelude::*;
 use yew::prelude::*;
 
-use about::About;
-use index::Index;
-use crate::layout::Layout;
-
 pub mod about;
 pub mod index;
+pub mod gol;
+
+
+use about::About;
+use index::Index;
+use gol::Gol;
+
+use crate::layout::Layout;
+
 
 #[derive(Clone, Routable, PartialEq)]
 pub enum Route {
@@ -15,6 +20,9 @@ pub enum Route {
 
     #[at("/about")]
     About,
+
+    #[at("/project/gol")]
+    Gol,
 
     #[not_found]
     #[at("/404")]
@@ -33,6 +41,12 @@ impl Route {
             Route::About => html! {
                 <Layout>
                     <About />
+                </Layout>
+            },
+
+            Route::Gol => html! {
+                <Layout>
+                    <Gol />
                 </Layout>
             },
 

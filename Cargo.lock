@@ -391,6 +391,8 @@ name = "intr"
 version = "0.1.0"
 dependencies = [
  "lucide-yew",
+ "wasm-bindgen",
+ "web-sys",
  "yew",
  "yew-router",
 ]

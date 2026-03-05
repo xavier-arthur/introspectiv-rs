@@ -7,3 +7,10 @@ edition = "2024"
 lucide-yew = { version = "2.577.0", features = ["all-icons"] }
 yew = { version = "0.22.1", features = ["csr"] }
 yew-router = "0.19.0"
+wasm-bindgen = "0.2"
+web-sys = { version = "0.3", features = [
+  "Window",
+  "Document",
+  "HtmlCanvasElement",
+  "CanvasRenderingContext2d"
+]}
