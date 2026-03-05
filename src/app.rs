@@ -1,19 +1,16 @@
 use yew::prelude::*;
+use yew_router::{
+    BrowserRouter,
+    Switch,
+};
+
 use crate::routes::Route;
 
-use crate::routes::index::Index;
-use crate::routes::about::About;
-
-fn switch(routes: Route) -> Html {
-    match routes {
-        Route::Index => html! { <Index /> },
-        Route::About => html! { <About /> },
-    }
-}
-
-#[component]
-pub fn App() -> Html {
+#[component(App)]
+pub fn app() -> Html {
     html! {
-        <Index />
+        <BrowserRouter>
+            <Switch<Route> render={Route::switch} />
+        </BrowserRouter>
     }
 }
