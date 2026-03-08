@@ -4,7 +4,8 @@ use crate::components::game_of_life::Grid;
 
 pub enum Msg {
     Reset,
-    Advance
+    Advance,
+    Randomize
 }
 
 pub struct Gol {
@@ -50,6 +51,8 @@ impl Component for Gol {
                         <input placeholder="Autoplay (ms)" type="text" class="px-2 rounded-l-lg border h-[calc(100%-1rem)]" />
                         <button onclick={reset} class="rounded-r-lg p-2 bg-dark-1 h-fit text-xs">{ "Clear" }</button>
                     </div>
+
+                    <button onclick={randomize} class="rounded-lg p-2 bg-dark-1 h-fit text-xs self-center mr-2">{ "Random" }</button>
                     <button onclick={advance} class="rounded-lg p-2 bg-dark-1 h-fit text-xs self-center mr-2">{ "Advance" }</button>
                 </div>
 

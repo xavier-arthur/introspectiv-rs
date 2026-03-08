@@ -4,7 +4,7 @@ use web_sys::{HtmlCanvasElement, CanvasRenderingContext2d, HtmlElement};
 
 pub struct Grid {
     canvas_ref: NodeRef,
-    grid: Vec<bool>,
+    grid: Vec<u8>,
     cols: i32,
     rows: i32,
 }
@@ -56,7 +56,7 @@ impl Grid {
                     cell_size,
                 );
 
-                if self.grid.get(index).copied().unwrap_or(false) {
+                if self.grid.get(index).copied().unwrap_or(0) > 0 {
                     render_ctx.fill_rect(
                         x as f64 * cell_size,
                         y as f64 * cell_size,
@@ -85,13 +85,25 @@ impl Grid {
             .filter_map(|off| {
                 let superindex = off + index;
 
-                if off < 0 || off >= len {
+                if superindex < 0 || superindex >= len {
                     return None;
                 }
 
-                Some(self.grid[superindex])
+                Some(self.grid[superindex as usize])
             })
             .collect()
+    }
+
+    fn randomize(&mut self) -> &mut Self {
+        let mut new_list = Vec::<u8>::with_capacity(self.grid.len());
+
+        for idx in 0..self.grid.len() {
+            new_list[idx] = rand::random::<bool>() as u8;
+        }
+
+        self.grid = new_list;
+
+        self
     }
 }
 
@@ -123,7 +135,7 @@ impl Component for Grid {
         self.cols = (rect.width() / 24.0).floor() as i32;
         self.rows = (rect.height() / 24.0).floor() as i32;
 
-        self.grid = vec![false; (self.cols * self.rows) as usize];
+        self.grid = vec![0; (self.cols * self.rows) as usize];
 
         self.draw(ctx);
     }
@@ -145,7 +157,12 @@ impl Component for Grid {
                 let index = (cell_y * self.cols + cell_x) as usize;
 
                 if let Some(cell) = self.grid.get_mut(index) {
-                    *cell = !*cell;
+                    *cell = *cell ^ 1;
+
+                    // if *cell == 1 {
+                    //     crate::log!("{:?}", self.get_neighbors(index as isize));
+                    // }
+
                 }
 
                 self.draw(ctx);
@@ -154,29 +171,32 @@ impl Component for Grid {
             },
 
             Msg::Advance => {
-                let mut new_grid: Vec<bool> = vec![false; self.grid.len()];
+                let mut new_grid = vec![0; self.grid.len()];
 
-                for (idx, cell_state) in self.grid.iter().enumerate() {
-                    let neighbours = self.get_neighbours(idx as i32);
+                for idx in 0..self.grid.len() {
+                    let neighbours = self.get_neighbors(idx as isize);
 
                     let alive = {
                         let mut c = 0;
 
                         for n in neighbours.iter() {
-                            if **n { c += 1 }
+                            if *n > 0 { c += 1 }
                         }
 
                         c
                     };
 
                     // apply rules of an alive cell
-                    if self.grid[idx] {
-                        if alive < 2 || alive > 3 {
-                            new_grid[idx] = false;
-                        }
+                    if self.grid[idx] >  0 {
+                        new_grid[idx] = if alive < 2 || alive > 3 {
+                            0
+                        } else {
+                            1
+                        };
                     } else {
+
                         if alive == 3 {
-                            new_grid[idx] = true;
+                            new_grid[idx] = 1;
                         }
                     }
                 }
@@ -188,7 +208,7 @@ impl Component for Grid {
             },
 
             Msg::Reset => {
-                self.grid.fill(false);
+                self.grid.fill(0);
                 self.draw(ctx);
 
                 false
@@ -197,8 +217,6 @@ impl Component for Grid {
     }
 
     fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
-        crate::log!("change");
-
         if ctx.props().reset_trigger != old_props.reset_trigger {
             ctx.link().send_message(Msg::Reset);
         }
