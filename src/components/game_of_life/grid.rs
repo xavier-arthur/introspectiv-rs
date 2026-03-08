@@ -6,17 +6,20 @@ pub struct Grid {
     canvas_ref: NodeRef,
     grid: Vec<bool>,
     cols: i32,
+    rows: i32,
 }
 
 #[derive(Properties, PartialEq)]
 pub struct GridProps {
     pub color: Option<String>,
     pub reset_trigger: u32,
+    pub advance_trigger: u32,
     pub autoplay_interval: u32
 }
 
 pub enum Msg {
     CellClicked(MouseEvent),
+    Advance,
     Reset,
 }
 
@@ -31,9 +34,10 @@ impl Grid {
         let canvas = self.canvas_ref.cast::<HtmlCanvasElement>().unwrap();
         let cell_size = 24.0;
 
-        let rows = (canvas.height() as f64 / cell_size).floor() as i32;
         let render_ctx: CanvasRenderingContext2d = canvas
-            .get_context("2d").unwrap().unwrap()
+            .get_context("2d")
+            .unwrap()
+            .unwrap()
             .dyn_into().unwrap();
 
         render_ctx.clear_rect(0.0, 0.0, canvas.width() as f64, canvas.height() as f64);
@@ -42,7 +46,7 @@ impl Grid {
         render_ctx.set_fill_style_str(&Self::color(ctx));
 
         for x in 0..self.cols {
-            for y in 0..rows {
+            for y in 0..self.rows {
                 let index = (y * self.cols + x) as usize;
 
                 render_ctx.stroke_rect(
@@ -64,8 +68,30 @@ impl Grid {
         }
     }
 
-    fn advance_game_state(&self, ctx: &Context<Self>) {
-        todo!()
+    fn get_neighbors(&self, index: isize) -> Vec<u8> {
+        let mut new_list = Vec::with_capacity(self.grid.len());
+        new_list = vec![0u8; self.grid.len()];
+
+        let cols = self.cols as isize;
+        let len = self.grid.len() as isize;
+
+        let offsets = [
+            (-cols - 1), (-cols), (-cols + 1),
+            (-1),         /* (0, 0) */ 1,
+            (cols - 1),  cols,  (cols + 1)
+        ];
+
+        offsets.into_iter()
+            .filter_map(|off| {
+                let superindex = off + index;
+
+                if off < 0 || off >= len {
+                    return None;
+                }
+
+                Some(self.grid[superindex])
+            })
+            .collect()
     }
 }
 
@@ -78,6 +104,7 @@ impl Component for Grid {
             canvas_ref: NodeRef::default(),
             grid: Vec::new(),
             cols: 0,
+            rows: 0
         }
     }
 
@@ -94,9 +121,9 @@ impl Component for Grid {
         canvas.set_height(rect.height() as u32);
 
         self.cols = (rect.width() / 24.0).floor() as i32;
-        let rows = (rect.height() / 24.0).floor() as i32;
+        self.rows = (rect.height() / 24.0).floor() as i32;
 
-        self.grid = vec![false; (self.cols * rows) as usize];
+        self.grid = vec![false; (self.cols * self.rows) as usize];
 
         self.draw(ctx);
     }
@@ -124,7 +151,41 @@ impl Component for Grid {
                 self.draw(ctx);
 
                 false
-            }
+            },
+
+            Msg::Advance => {
+                let mut new_grid: Vec<bool> = vec![false; self.grid.len()];
+
+                for (idx, cell_state) in self.grid.iter().enumerate() {
+                    let neighbours = self.get_neighbours(idx as i32);
+
+                    let alive = {
+                        let mut c = 0;
+
+                        for n in neighbours.iter() {
+                            if **n { c += 1 }
+                        }
+
+                        c
+                    };
+
+                    // apply rules of an alive cell
+                    if self.grid[idx] {
+                        if alive < 2 || alive > 3 {
+                            new_grid[idx] = false;
+                        }
+                    } else {
+                        if alive == 3 {
+                            new_grid[idx] = true;
+                        }
+                    }
+                }
+
+                self.grid = new_grid;
+                self.draw(ctx);
+
+                false
+            },
 
             Msg::Reset => {
                 self.grid.fill(false);
@@ -136,8 +197,14 @@ impl Component for Grid {
     }
 
     fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
+        crate::log!("change");
+
         if ctx.props().reset_trigger != old_props.reset_trigger {
             ctx.link().send_message(Msg::Reset);
+        }
+
+        if ctx.props().advance_trigger != old_props.advance_trigger {
+            ctx.link().send_message(Msg::Advance);
         }
 
         false
