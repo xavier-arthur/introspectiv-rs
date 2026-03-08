@@ -12,8 +12,11 @@ pub struct Grid {
 #[derive(Properties, PartialEq)]
 pub struct GridProps {
     pub color: Option<String>,
+
     pub reset_trigger: u32,
     pub advance_trigger: u32,
+    pub randomize_trigger: u32,
+
     pub autoplay_interval: u32
 }
 
@@ -21,6 +24,7 @@ pub enum Msg {
     CellClicked(MouseEvent),
     Advance,
     Reset,
+    Randomize
 }
 
 impl Grid {
@@ -69,9 +73,6 @@ impl Grid {
     }
 
     fn get_neighbors(&self, index: isize) -> Vec<u8> {
-        let mut new_list = Vec::with_capacity(self.grid.len());
-        new_list = vec![0u8; self.grid.len()];
-
         let cols = self.cols as isize;
         let len = self.grid.len() as isize;
 
@@ -95,7 +96,9 @@ impl Grid {
     }
 
     fn randomize(&mut self) -> &mut Self {
-        let mut new_list = Vec::<u8>::with_capacity(self.grid.len());
+        let mut new_list = vec![0; self.grid.len()];
+
+        crate::log!("{:?}", self.grid.len());
 
         for idx in 0..self.grid.len() {
             new_list[idx] = rand::random::<bool>() as u8;
@@ -212,6 +215,14 @@ impl Component for Grid {
                 self.draw(ctx);
 
                 false
+            },
+
+
+            Msg::Randomize => {
+                self.randomize();
+                self.draw(ctx);
+
+                false
             }
         }
     }
@@ -223,6 +234,10 @@ impl Component for Grid {
 
         if ctx.props().advance_trigger != old_props.advance_trigger {
             ctx.link().send_message(Msg::Advance);
+        }
+
+        if ctx.props().randomize_trigger != old_props.randomize_trigger {
+            ctx.link().send_message(Msg::Randomize);
         }
 
         false
