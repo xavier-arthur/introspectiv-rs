@@ -9,22 +9,22 @@ pub struct Grid {
     rows: i32,
 }
 
+#[derive(Clone, PartialEq)]
+pub enum GridCommand {
+    Advance,
+    Reset,
+    Randomize
+}
+
 #[derive(Properties, PartialEq)]
 pub struct GridProps {
+    pub command: Option<(u32, GridCommand)>,
     pub color: Option<String>,
-
-    pub reset_trigger: u32,
-    pub advance_trigger: u32,
-    pub randomize_trigger: u32,
-
-    pub autoplay_interval: u32
 }
 
 pub enum Msg {
     CellClicked(MouseEvent),
-    Advance,
-    Reset,
-    Randomize
+    Command(GridCommand)
 }
 
 impl Grid {
@@ -145,35 +145,8 @@ impl Component for Grid {
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::CellClicked(e) => {
-                let cell_size = 24.0;
+            Msg::Command(GridCommand::Advance) => {
 
-                let canvas = self.canvas_ref.cast::<HtmlCanvasElement>().unwrap();
-
-                let rect = canvas.get_bounding_client_rect();
-
-                let x = e.client_x() as f64 - rect.left();
-                let y = e.client_y() as f64 - rect.top();
-
-                let cell_x = (x / cell_size).floor() as i32;
-                let cell_y = (y / cell_size).floor() as i32;
-                let index = (cell_y * self.cols + cell_x) as usize;
-
-                if let Some(cell) = self.grid.get_mut(index) {
-                    *cell = *cell ^ 1;
-
-                    // if *cell == 1 {
-                    //     crate::log!("{:?}", self.get_neighbors(index as isize));
-                    // }
-
-                }
-
-                self.draw(ctx);
-
-                false
-            },
-
-            Msg::Advance => {
                 let mut new_grid = vec![0; self.grid.len()];
 
                 for idx in 0..self.grid.len() {
@@ -204,40 +177,61 @@ impl Component for Grid {
                     }
                 }
 
-                self.grid = new_grid;
-                self.draw(ctx);
+                    self.grid = new_grid;
+                    self.draw(ctx);
 
-                false
+                    false
             },
 
-            Msg::Reset => {
+            Msg::Command(GridCommand::Reset) => {
                 self.grid.fill(0);
                 self.draw(ctx);
 
                 false
             },
 
-
-            Msg::Randomize => {
+            Msg::Command(GridCommand::Randomize) => {
                 self.randomize();
                 self.draw(ctx);
 
                 false
             }
+
+            Msg::CellClicked(e) => {
+                let cell_size = 24.0;
+
+                let canvas = self.canvas_ref.cast::<HtmlCanvasElement>().unwrap();
+
+                let rect = canvas.get_bounding_client_rect();
+
+                let x = e.client_x() as f64 - rect.left();
+                let y = e.client_y() as f64 - rect.top();
+
+                let cell_x = (x / cell_size).floor() as i32;
+                let cell_y = (y / cell_size).floor() as i32;
+                let index = (cell_y * self.cols + cell_x) as usize;
+
+                if let Some(cell) = self.grid.get_mut(index) {
+                    *cell = *cell ^ 1;
+
+                    // if *cell == 1 {
+                    //     crate::log!("{:?}", self.get_neighbors(index as isize));
+                    // }
+
+                }
+
+                self.draw(ctx);
+
+                false
+            },
         }
     }
 
     fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
-        if ctx.props().reset_trigger != old_props.reset_trigger {
-            ctx.link().send_message(Msg::Reset);
-        }
-
-        if ctx.props().advance_trigger != old_props.advance_trigger {
-            ctx.link().send_message(Msg::Advance);
-        }
-
-        if ctx.props().randomize_trigger != old_props.randomize_trigger {
-            ctx.link().send_message(Msg::Randomize);
+        if ctx.props().command != old_props.command {
+            if let Some((_id, c)) = &ctx.props().command {
+                ctx.link().send_message(Msg::Command(c.clone()));
+            }
         }
 
         false

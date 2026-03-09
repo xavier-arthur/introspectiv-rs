@@ -1,26 +1,19 @@
+use lucide_yew::Grid2X2Check;
 use wasm_bindgen::JsCast;
 use web_sys::window;
 use yew::prelude::*;
 
-use crate::components::game_of_life::Grid;
-
-pub enum Msg {
-    Reset,
-    Advance,
-    Randomize
-}
+use crate::components::game_of_life::{Grid, GridCommand};
 
 pub struct Gol {
-    reset_trigger: u32,
-    advance_trigger: u32,
-    randomize_trigger: u32,
+    command: Option<(u32, GridCommand)>,
 
     #[allow(dead_code)]
     key_listener: Option<gloo_events::EventListener> // this is just for storing
 }
 
 impl Component for Gol {
-    type Message = Msg;
+    type Message = GridCommand;
     type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
@@ -33,45 +26,30 @@ impl Component for Gol {
                 let e = generic_event.dyn_ref::<KeyboardEvent>().unwrap();
 
                 if e.key() == " " {
-                    link.send_message(Msg::Advance);
+                    link.send_message(GridCommand::Advance);
                 }
             }
         );
 
         Self {
-            randomize_trigger: 0,
-            reset_trigger: 0,
-            advance_trigger: 0,
+            command: None,
             key_listener: Some(key_listener)
         }
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-        match msg {
-            Msg::Reset => {
-                self.reset_trigger += 1;
+        self.command = Some(match self.command.as_mut() {
+            Some((id, _)) => (*id + 1, msg),
+            None => (1, msg)
+        });
 
-                true
-            },
-
-            Msg::Randomize => {
-                self.randomize_trigger += 1;
-
-                true
-            },
-
-            Msg::Advance => {
-                self.advance_trigger += 1;
-
-                true
-            }
-        }
+        true
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let reset = ctx.link().callback(|_| Msg::Reset);
-        let advance = ctx.link().callback(|_| Msg::Advance);
-        let randomize = ctx.link().callback(|_| Msg::Randomize);
+        let reset = ctx.link().callback(|_| GridCommand::Reset);
+        let advance = ctx.link().callback(|_| GridCommand::Advance);
+        let randomize = ctx.link().callback(|_| GridCommand::Randomize);
 
         html! {
             <>
@@ -90,10 +68,7 @@ impl Component for Gol {
                 <div class="h-[calc(100%-3rem)]">
                     <Grid
                         color={Option::<String>::None}
-                        reset_trigger={self.reset_trigger}
-                        advance_trigger={self.advance_trigger}
-                        randomize_trigger={self.randomize_trigger}
-                        autoplay_interval={0}
+                        command={self.command.clone()}
                     />
                 </div>
             </>
