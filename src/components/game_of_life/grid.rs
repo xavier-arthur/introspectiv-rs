@@ -13,13 +13,14 @@ pub struct Grid {
 pub enum GridCommand {
     Advance,
     Reset,
-    Randomize
+    Randomize,
 }
 
 #[derive(Properties, PartialEq)]
 pub struct GridProps {
     pub command: Option<(u32, GridCommand)>,
     pub color: Option<String>,
+    pub autoplay_interval: u32
 }
 
 pub enum Msg {
@@ -232,6 +233,11 @@ impl Component for Grid {
             if let Some((_id, c)) = &ctx.props().command {
                 ctx.link().send_message(Msg::Command(c.clone()));
             }
+
+            return false;
+        }
+
+        if ctx.props().autoplay_interval > 0 && ctx.props().autoplay_interval != old_props.autoplay_interval {
         }
 
         false

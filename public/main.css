@@ -222,9 +222,6 @@
   .inline-flex {
     display: inline-flex;
   }
-  .table {
-    display: table;
-  }
   .size-4 {
     width: calc(var(--spacing) * 4);
     height: calc(var(--spacing) * 4);
@@ -254,12 +251,6 @@
   .w-full {
     width: 100%;
   }
-  .border-collapse {
-    border-collapse: collapse;
-  }
-  .resize {
-    resize: both;
-  }
   .items-center {
     align-items: center;
   }
@@ -268,13 +259,6 @@
   }
   .gap-x-2 {
     column-gap: calc(var(--spacing) * 2);
-  }
-  .space-x-0 {
-    :where(& > :not(:last-child)) {
-      --tw-space-x-reverse: 0;
-      margin-inline-start: calc(calc(var(--spacing) * 0) * var(--tw-space-x-reverse));
-      margin-inline-end: calc(calc(var(--spacing) * 0) * calc(1 - var(--tw-space-x-reverse)));
-    }
   }
   .space-x-0\.5 {
     :where(& > :not(:last-child)) {
@@ -288,9 +272,6 @@
   }
   .rounded-lg {
     border-radius: var(--radius-lg);
-  }
-  .rounded-xl {
-    border-radius: var(--radius-xl);
   }
   .rounded-l-lg {
     border-top-left-radius: var(--radius-lg);
@@ -330,13 +311,6 @@
   .text-xs {
     font-size: var(--text-xs);
     line-height: var(--tw-leading, var(--text-xs--line-height));
-  }
-  .underline {
-    text-decoration-line: underline;
-  }
-  .outline {
-    outline-style: var(--tw-outline-style);
-    outline-width: 1px;
   }
   .group-hover\:block {
     &:is(:where(.group):hover *) {
@@ -384,17 +358,11 @@ body {
   inherits: false;
   initial-value: solid;
 }
-@property --tw-outline-style {
-  syntax: "*";
-  inherits: false;
-  initial-value: solid;
-}
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
       --tw-space-x-reverse: 0;
       --tw-border-style: solid;
-      --tw-outline-style: solid;
     }
   }
 }

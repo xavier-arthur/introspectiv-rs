@@ -1,6 +1,5 @@
-use lucide_yew::Grid2X2Check;
 use wasm_bindgen::JsCast;
-use web_sys::window;
+use web_sys::{HtmlInputElement, window};
 use yew::prelude::*;
 
 use crate::components::game_of_life::{Grid, GridCommand};
@@ -9,11 +8,18 @@ pub struct Gol {
     command: Option<(u32, GridCommand)>,
 
     #[allow(dead_code)]
-    key_listener: Option<gloo_events::EventListener> // this is just for storing
+    key_listener: Option<gloo_events::EventListener>,
+
+    autoplay_interval: u32
+}
+
+pub enum Msg {
+    Command(GridCommand),
+    UpdateAutoplay(String)
 }
 
 impl Component for Gol {
-    type Message = GridCommand;
+    type Message = Msg;
     type Properties = ();
 
     fn create(ctx: &Context<Self>) -> Self {
@@ -26,30 +32,43 @@ impl Component for Gol {
                 let e = generic_event.dyn_ref::<KeyboardEvent>().unwrap();
 
                 if e.key() == " " {
-                    link.send_message(GridCommand::Advance);
+                    link.send_message(Msg::Command(GridCommand::Advance));
                 }
             }
         );
 
         Self {
             command: None,
-            key_listener: Some(key_listener)
+            key_listener: Some(key_listener),
+            autoplay_interval: 0
         }
     }
 
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
-        self.command = Some(match self.command.as_mut() {
-            Some((id, _)) => (*id + 1, msg),
-            None => (1, msg)
-        });
+        match msg {
+            Msg::Command(g) => {
+                let id = if let Some((id, _)) = self.command {
+                    id
+                } else {
+                    0
+                };
+
+                self.command = Some((id, g));
+            },
+
+            Msg::UpdateAutoplay(new_value) => {
+                self.autoplay_interval = new_value.parse::<u32>().unwrap();
+            }
+        };
+
 
         true
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        let reset = ctx.link().callback(|_| GridCommand::Reset);
-        let advance = ctx.link().callback(|_| GridCommand::Advance);
-        let randomize = ctx.link().callback(|_| GridCommand::Randomize);
+        let reset = ctx.link().callback(|_| Msg::Command(GridCommand::Reset));
+        let advance = ctx.link().callback(|_| Msg::Command(GridCommand::Advance));
+        let randomize = ctx.link().callback(|_| Msg::Command(GridCommand::Randomize));
 
         html! {
             <>
@@ -69,6 +88,7 @@ impl Component for Gol {
                     <Grid
                         color={Option::<String>::None}
                         command={self.command.clone()}
+                        autoplay_interval={self.autoplay_interval}
                     />
                 </div>
             </>

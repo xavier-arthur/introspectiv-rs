@@ -7,7 +7,7 @@ pub struct LayoutProps {
     pub children: yew::Children
 }
 
-#[component[TopBar]]
+#[component(TopBar)]
 fn topbar() -> Html {
     use crate::routes::Route;
 
@@ -33,7 +33,7 @@ fn topbar() -> Html {
                     </Link<Route>>
 
                     <div class="hidden group-hover:block absolute top-4 bg-dark-1 w-full">
-                        <Link<Route> to={Route::Gol}>
+                        <Link<Route> to={Route::Gol} classes={"w-full block"}>
                             { "GOL" }
                         </Link<Route>>
                     </div>
