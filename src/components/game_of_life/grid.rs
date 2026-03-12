@@ -7,6 +7,7 @@ pub struct Grid {
     grid: Vec<u8>,
     cols: i32,
     rows: i32,
+    _autoplay_interval: Option<gloo::timers::callback::Interval>
 }
 
 #[derive(Clone, PartialEq)]
@@ -109,6 +110,42 @@ impl Grid {
 
         self
     }
+
+    fn advance(&mut self) -> &mut Self {
+        let mut new_grid = vec![0; self.grid.len()];
+
+        for idx in 0..self.grid.len() {
+            let neighbours = self.get_neighbors(idx as isize);
+
+            let alive = {
+                let mut c = 0;
+
+                for n in neighbours.iter() {
+                    if *n > 0 { c += 1 }
+                }
+
+                c
+            };
+
+            // apply rules of an alive cell
+            if self.grid[idx] >  0 {
+                new_grid[idx] = if alive < 2 || alive > 3 {
+                    0
+                } else {
+                    1
+                };
+            } else {
+
+                if alive == 3 {
+                    new_grid[idx] = 1;
+                }
+            }
+        }
+
+        self.grid = new_grid;
+
+        self
+    }
 }
 
 impl Component for Grid {
@@ -120,7 +157,8 @@ impl Component for Grid {
             canvas_ref: NodeRef::default(),
             grid: Vec::new(),
             cols: 0,
-            rows: 0
+            rows: 0,
+            _autoplay_interval: None
         }
     }
 
@@ -147,41 +185,10 @@ impl Component for Grid {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::Command(GridCommand::Advance) => {
+                self.advance();
+                self.draw(&ctx);
 
-                let mut new_grid = vec![0; self.grid.len()];
-
-                for idx in 0..self.grid.len() {
-                    let neighbours = self.get_neighbors(idx as isize);
-
-                    let alive = {
-                        let mut c = 0;
-
-                        for n in neighbours.iter() {
-                            if *n > 0 { c += 1 }
-                        }
-
-                        c
-                    };
-
-                    // apply rules of an alive cell
-                    if self.grid[idx] >  0 {
-                        new_grid[idx] = if alive < 2 || alive > 3 {
-                            0
-                        } else {
-                            1
-                        };
-                    } else {
-
-                        if alive == 3 {
-                            new_grid[idx] = 1;
-                        }
-                    }
-                }
-
-                    self.grid = new_grid;
-                    self.draw(ctx);
-
-                    false
+                false
             },
 
             Msg::Command(GridCommand::Reset) => {
@@ -229,15 +236,40 @@ impl Component for Grid {
     }
 
     fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
-        if ctx.props().command != old_props.command {
-            if let Some((_id, c)) = &ctx.props().command {
+        let current_props = ctx.props();
+
+        if current_props.command != old_props.command {
+            if let Some((_id, c)) = &current_props.command {
                 ctx.link().send_message(Msg::Command(c.clone()));
             }
 
             return false;
         }
 
-        if ctx.props().autoplay_interval > 0 && ctx.props().autoplay_interval != old_props.autoplay_interval {
+        crate::log!("{}", current_props.autoplay_interval);
+
+        if current_props.autoplay_interval != old_props.autoplay_interval {
+            let interval_ms = current_props.autoplay_interval;
+
+            if interval_ms == 0 {
+                self._autoplay_interval
+                    .take()
+                    .map(|int| {
+                        int.cancel();
+                    });
+
+                self._autoplay_interval = None;
+
+                return false;
+            }
+
+            let link = ctx.link().clone();
+
+            self._autoplay_interval = Some(gloo::timers::callback::Interval::new(interval_ms, move || {
+                link.send_message(Msg::Command(GridCommand::Advance));
+            }));
+
+            return false;
         }
 
         false

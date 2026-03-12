@@ -8,7 +8,7 @@ pub struct Gol {
     command: Option<(u32, GridCommand)>,
 
     #[allow(dead_code)]
-    key_listener: Option<gloo_events::EventListener>,
+    key_listener: Option<gloo::events::EventListener>,
 
     autoplay_interval: u32
 }
@@ -25,7 +25,7 @@ impl Component for Gol {
     fn create(ctx: &Context<Self>) -> Self {
         let link = ctx.link().clone();
 
-        let key_listener = gloo_events::EventListener::new(
+        let key_listener = gloo::events::EventListener::new(
             &window().unwrap(),
             "keyup",
             move |generic_event| {
@@ -70,11 +70,17 @@ impl Component for Gol {
         let advance = ctx.link().callback(|_| Msg::Command(GridCommand::Advance));
         let randomize = ctx.link().callback(|_| Msg::Command(GridCommand::Randomize));
 
+        let on_autoplay_input = ctx.link().callback(|e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+
+            Msg::UpdateAutoplay(input.value())
+        });
+
         html! {
             <>
                 <div class="h-12 flex justify-between">
                     <div class="inline-flex items-center">
-                        <input placeholder="Autoplay (ms)" type="text" class="px-2 rounded-l-lg border h-[calc(100%-1rem)]" />
+                        <input value={self.autoplay_interval.to_string()} oninput={on_autoplay_input} placeholder="Autoplay (ms)" type="number" class="px-2 rounded-l-lg border h-[calc(100%-1rem)]" />
                         <button onclick={reset} class="rounded-r-lg p-2 bg-dark-1 h-fit text-xs">{ "Clear" }</button>
                     </div>
 

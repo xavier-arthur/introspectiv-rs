@@ -469,7 +469,6 @@ version = "0.1.0"
 dependencies = [
  "getrandom 0.4.2",
  "gloo",
- "gloo-events",
  "lucide-yew",
  "rand",
  "wasm-bindgen",
