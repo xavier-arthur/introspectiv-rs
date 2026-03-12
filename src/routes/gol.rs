@@ -10,12 +10,21 @@ pub struct Gol {
     #[allow(dead_code)]
     key_listener: Option<gloo::events::EventListener>,
 
-    autoplay_interval: u32
+    autoplay: Option<Autoplay>
+}
+
+struct Autoplay {
+    interval: u32,
+    last_update: f64
 }
 
 pub enum Msg {
     Command(GridCommand),
     UpdateAutoplay(String)
+}
+
+fn now() -> f64 {
+    web_sys::window().unwrap().performance().unwrap().now()
 }
 
 impl Component for Gol {
@@ -40,7 +49,7 @@ impl Component for Gol {
         Self {
             command: None,
             key_listener: Some(key_listener),
-            autoplay_interval: 0
+            autoplay: None
         }
     }
 
@@ -57,7 +66,31 @@ impl Component for Gol {
             },
 
             Msg::UpdateAutoplay(new_value) => {
-                self.autoplay_interval = new_value.parse::<u32>().unwrap();
+                let interval = if new_value.is_empty() {
+                    0u32
+                } else {
+                    new_value.parse::<u32>().unwrap()
+                };
+
+                let now = now();
+
+                self.autoplay = Some(self.autoplay
+                    .take()
+                    .map_or_else(
+                        || {
+                            Autoplay {
+                                interval,
+                                last_update: now,
+                            }
+                        },
+
+                        |mut ap| {
+                            ap.interval = interval;
+                            ap.last_update = now;
+
+                            ap
+                        }
+                    ));
             }
         };
 
@@ -80,7 +113,7 @@ impl Component for Gol {
             <>
                 <div class="h-12 flex justify-between">
                     <div class="inline-flex items-center">
-                        <input value={self.autoplay_interval.to_string()} oninput={on_autoplay_input} placeholder="Autoplay (ms)" type="number" class="px-2 rounded-l-lg border h-[calc(100%-1rem)]" />
+                        <input value={self.autoplay.as_ref().map(|v| v.interval).unwrap_or(0).to_string()} oninput={on_autoplay_input} placeholder="Autoplay (ms)" type="number" class="px-2 rounded-l-lg border h-[calc(100%-1rem)]" />
                         <button onclick={reset} class="rounded-r-lg p-2 bg-dark-1 h-fit text-xs">{ "Clear" }</button>
                     </div>
 
@@ -94,7 +127,7 @@ impl Component for Gol {
                     <Grid
                         color={Option::<String>::None}
                         command={self.command.clone()}
-                        autoplay_interval={self.autoplay_interval}
+                        autoplay_interval={self.autoplay.as_ref().map(|v| v.interval).unwrap_or(0)}
                     />
                 </div>
             </>
